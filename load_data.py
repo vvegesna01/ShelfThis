@@ -4,7 +4,7 @@ import streamlit as st
 import requests
 
 # Define the path or URL to your CSV file
-DATA_URL = '/books.csv'
+DATA_URL = './books.csv'
 
 # Date columns for special processing
 DATE_COLUMNS = ['Date Added', 'Last Date Read', 'Dates Read']
