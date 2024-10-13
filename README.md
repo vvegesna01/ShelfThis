@@ -1,3 +1,3 @@
 # ShelfThis
 A reading dashboard website! 
-<img width="778" alt="Screenshot 2024-10-13 at 3 03 45 PM" src="https://github.com/user-attachments/assets/855447ce-edac-4883-9afd-5db8aea3dce0">
+<img width="205" alt="Screenshot 2024-10-13 at 3 57 08 PM" src="https://github.com/user-attachments/assets/5bcf3fe6-4483-43a8-bd74-c32058cad816">
