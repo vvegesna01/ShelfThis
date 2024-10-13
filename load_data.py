@@ -1,6 +1,7 @@
 # Import necessary libraries
 import pandas as pd
 import streamlit as st
+import plotly.express as px
 import requests
 
 # Define the path or URL to your CSV file
