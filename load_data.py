@@ -1,7 +1,6 @@
 # Import necessary libraries
 import pandas as pd
 import streamlit as st
-import plotly.express as px
 import requests
 
 # Define the path or URL to your CSV file
@@ -49,8 +48,12 @@ data_load_state.text('Loading data...done!')
 data['read_year'] = data['last date read'].dt.year
 
 # Add filter for year on the main page
-st.header("Keerthana's Bookshelf Dashboard")
-st.write("I've used my imported Storygraph data to build this dashboard! Just a fun project to see my reading insights.")
+st.header("Shelf This")
+st.subheader("Keerthana's Reading Dashboard")
+st.markdown("""
+I've used my imported <a class="footer-link" href="https://app.thestorygraph.com/" target="_blank">Storygraph</a>data to build this dashboard! Just a fun project to see my reading insights.
+""", unsafe_allow_html=True)
+
 
 # Create a selectbox for year filtering with "All years" as default
 years = sorted(data['read_year'].dropna().unique(), reverse=True)
@@ -67,7 +70,7 @@ else:
 
 # Bookshelf for highest-rated books of all time
 st.write('---')
-st.subheader("My Best Rated Books of All Time")
+st.subheader("My Highest Rated Reads")
 
 # Filter for highest-rated books
 highest_rated_books = data.nlargest(10, 'star rating')  # Adjust number to show more or less
