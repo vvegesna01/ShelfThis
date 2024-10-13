@@ -5,7 +5,7 @@ import plotly.express as px
 import requests
 
 # Define the path or URL to your CSV file
-DATA_URL = './books.csv'
+DATA_URL = '/Users/keerthanavegesna/Desktop/Coding/YourLibrary/books.csv'
 
 # Date columns for special processing
 DATE_COLUMNS = ['Date Added', 'Last Date Read', 'Dates Read']
@@ -138,6 +138,15 @@ book_covers_html += '</div>'
 # Render the HTML for the shelf
 st.markdown(book_covers_html, unsafe_allow_html=True)
 
+### Visualization 1: Pie Chart for Book Formats
+format_counts = filtered_data['format'].value_counts()
+fig_format_pie = px.pie(
+    names=format_counts.index,
+    values=format_counts.values,
+    title='Books by Format',
+    hole=0.3
+)
+st.plotly_chart(fig_format_pie)
 
 ### Additional Insights:
 st.write('---')
