@@ -92,24 +92,48 @@ st.write("---")
 
 # Total books read
 total_books = len(filtered_data)
-st.subheader(f"Total Books Read (since 2022): {total_books}")
+st.subheader(f"Total Books Read: {total_books}")
 
-### Visualization 4: Pie Chart for Star Ratings
-if 'star rating' in filtered_data.columns:
-    star_rating_counts = filtered_data['star rating'].value_counts()
-    fig_star_rating_pie = px.pie(
-        names=star_rating_counts.index,
-        values=star_rating_counts.values,
-        title='Star Ratings Breakdown',
+### Visualization 4: Pie Chart for Star Ratings and Format
+if 'star rating' in filtered_data.columns and 'format' in filtered_data.columns:
+    # Create two columns
+    col1, col2 = st.columns(2)
+    
+    # Star Ratings Pie Chart
+    with col1:
+        star_rating_counts = filtered_data['star rating'].value_counts()
+        fig_star_rating_pie = px.pie(
+            names=star_rating_counts.index,
+            values=star_rating_counts.values,
+            title='Star Ratings Breakdown',
+            hole=0.3
+        )
+        st.plotly_chart(fig_star_rating_pie)
+        # Average Rating Display
+        avg_rating = filtered_data['star rating'].mean()
+        st.write(f"**Average Star Rating**: {avg_rating:.2f}")
+
+    # Books by Format Pie Chart
+with col2:
+    format_counts = filtered_data['format'].value_counts()
+    fig_format_pie = px.pie(
+        names=format_counts.index,
+        values=format_counts.values,
+        title='Books by Format',
         hole=0.3
     )
-    st.plotly_chart(fig_star_rating_pie)
-avg_rating = filtered_data['star rating'].mean()
-st.write(f"**Average Star Rating**: {avg_rating:.2f}")
+    st.plotly_chart(fig_format_pie)
+
+# Get the most used format
+most_used_format_name = format_counts.idxmax()  # Get the name of the most used format
+most_used_format_count = format_counts.max()     # Get the count of the most used format
+
+st.write(f"**Most Used Format**: {most_used_format_name} ({most_used_format_count} books)")
+
 
 st.write('---')
 # Display book cover shelf for all books at the top
-st.subheader('My Entire Bookshelf (kind of)')
+st.subheader('Bookshelf')
 book_isbns = filtered_data['isbn/uid'].dropna().unique()
 
 # Create a scrollable horizontal shelf of book covers
@@ -138,20 +162,8 @@ book_covers_html += '</div>'
 # Render the HTML for the shelf
 st.markdown(book_covers_html, unsafe_allow_html=True)
 
-### Visualization 1: Pie Chart for Book Formats
-format_counts = filtered_data['format'].value_counts()
-fig_format_pie = px.pie(
-    names=format_counts.index,
-    values=format_counts.values,
-    title='Books by Format',
-    hole=0.3
-)
-st.plotly_chart(fig_format_pie)
-
 ### Additional Insights:
 st.write('---')
-st.subheader('Book Data')
-
 ### Visualization 3: Bar Chart for Number of Books Read by Year
 books_per_year = data.groupby('read_year').size()
 fig_books_year = px.bar(
@@ -167,7 +179,7 @@ fig_books_year.update_xaxes(tickvals=books_per_year.index)
 st.plotly_chart(fig_books_year)
 
 # Show table of filtered data
-st.subheader('Books Read')
+st.subheader('Raw Book Data')
 st.write(filtered_data[['title', 'authors', 'format', 'star rating']])
 
 # Contact Footer
