@@ -5,7 +5,7 @@ import plotly.express as px
 import requests
 
 # Define the path or URL to your CSV file
-DATA_URL = './books.csv'
+DATA_URL = '/Users/keerthanavegesna/Desktop/Coding/YourLibrary/books.csv'
 
 # Date columns for special processing
 DATE_COLUMNS = ['Date Added', 'Last Date Read', 'Dates Read']
@@ -31,6 +31,7 @@ def load_data(nrows):
     return data
 
 # Function to get book cover image URL from Google Books API using ISBN
+@st.cache_data
 def get_book_cover(isbn):
     url = f'https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn}'
     response = requests.get(url)
@@ -52,9 +53,8 @@ data['read_year'] = data['last date read'].dt.year
 st.header("Shelf This")
 st.subheader("Keerthana's Reading Dashboard")
 st.markdown("""
-I've used my imported <a class="footer-link" href="https://app.thestorygraph.com/" target="_blank">Storygraph</a>data to build this dashboard! Just a fun project to see my reading insights.
+I've used my imported <a class="footer-link" href="https://app.thestorygraph.com/" target="_blank">Storygraph</a> data to build this dashboard! Just a fun project to see my reading insights.
 """, unsafe_allow_html=True)
-
 
 # Create a selectbox for year filtering with "All years" as default
 years = sorted(data['read_year'].dropna().unique(), reverse=True)
@@ -66,8 +66,6 @@ if selected_year != "All years":
     filtered_data = data[data['read_year'] == selected_year]
 else:
     filtered_data = data
-
-
 
 # Bookshelf for highest-rated books of all time
 st.write('---')
@@ -114,22 +112,20 @@ if 'star rating' in filtered_data.columns and 'format' in filtered_data.columns:
         st.write(f"**Average Star Rating**: {avg_rating:.2f}")
 
     # Books by Format Pie Chart
-with col2:
-    format_counts = filtered_data['format'].value_counts()
-    fig_format_pie = px.pie(
-        names=format_counts.index,
-        values=format_counts.values,
-        title='Books by Format',
-        hole=0.3
-    )
-    st.plotly_chart(fig_format_pie)
+    with col2:
+        format_counts = filtered_data['format'].value_counts()
+        fig_format_pie = px.pie(
+            names=format_counts.index,
+            values=format_counts.values,
+            title='Books by Format',
+            hole=0.3
+        )
+        st.plotly_chart(fig_format_pie)
 
 # Get the most used format
 most_used_format_name = format_counts.idxmax()  # Get the name of the most used format
 most_used_format_count = format_counts.max()     # Get the count of the most used format
-
 st.write(f"**Most Used Format**: {most_used_format_name} ({most_used_format_count} books)")
-
 
 st.write('---')
 # Display book cover shelf for all books at the top
@@ -175,7 +171,6 @@ fig_books_year = px.bar(
 
 # Update x-axis to show only integer year values
 fig_books_year.update_xaxes(tickvals=books_per_year.index)
-
 st.plotly_chart(fig_books_year)
 
 # Show table of filtered data
