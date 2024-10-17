@@ -1,4 +1,3 @@
-# Import necessary libraries
 import pandas as pd
 import streamlit as st
 import plotly.express as px
@@ -31,15 +30,60 @@ def load_data(nrows):
     return data
 
 # Function to get book cover image URL from Google Books API using ISBN
-@st.cache_data
+@st.cache_data(ttl=86400)  # Cache the results for 24 hours
 def get_book_cover(isbn):
+    if pd.isna(isbn):
+        return None
     url = f'https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn}'
     response = requests.get(url)
+    
+    # Error handling and checking response status
     if response.status_code == 200:
         book_data = response.json()
         if 'items' in book_data:
-            return book_data['items'][0]['volumeInfo']['imageLinks'].get('thumbnail', None)
+            image_links = book_data['items'][0]['volumeInfo'].get('imageLinks', {})
+            cover_url = image_links.get('thumbnail', None)
+            
+            # Ensure the URL is using HTTPS
+            if cover_url and cover_url.startswith("http:"):
+                cover_url = cover_url.replace("http:", "https:")
+            
+            return cover_url
+    
+    # Return None if the API call fails or no cover is found
     return None
+
+# Function to render a scrollable book shelf with book covers
+def render_bookshelf(book_isbns):
+    # Custom CSS to make the shelf scrollable horizontally
+    st.markdown("""
+        <style>
+        .scrollable-shelf {
+            display: flex;
+            overflow-x: scroll;
+            padding: 10px;
+            white-space: nowrap;
+        }
+        .scrollable-shelf img {
+            margin-right: 10px;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Create a list to hold book cover URLs
+    cover_images = []
+    
+    # Loop through each ISBN, get the cover URL, and append to list
+    for isbn in book_isbns:
+        cover_url = get_book_cover(isbn)
+        if cover_url:
+            cover_images.append(cover_url)
+        else:
+            # Placeholder image for books without a cover
+            cover_images.append('https://via.placeholder.com/120x180.png?text=No+Cover')
+
+    # Use st.image() to display covers
+    st.image(cover_images, width=120, use_column_width=False)
 
 # Load data
 data_load_state = st.text('Loading data...')
@@ -49,55 +93,44 @@ data_load_state.text('Loading data...done!')
 # Extract the year from 'last date read'
 data['read_year'] = data['last date read'].dt.year
 
-# Add filter for year on the main page
-st.header("Shelf This")
+
+st.header("Shelf This 📚")
 st.subheader("Keerthana's Reading Dashboard")
 st.markdown("""
 I've used my imported <a class="footer-link" href="https://app.thestorygraph.com/" target="_blank">Storygraph</a> data to build this dashboard! Just a fun project to see my reading insights.
 """, unsafe_allow_html=True)
 
-# Create a selectbox for year filtering with "All years" as default
 years = sorted(data['read_year'].dropna().unique(), reverse=True)
 years.insert(0, "All years")  # Add "All years" option at the beginning
 selected_year = st.selectbox('Select Year', years)
 
-# Filter data based on the selected year (or show all data if "All years" is selected)
+# selet year filter
 if selected_year != "All years":
     filtered_data = data[data['read_year'] == selected_year]
 else:
     filtered_data = data
 
-# Bookshelf for highest-rated books of all time
-st.write('---')
-st.subheader("My Highest Rated Reads")
 
-# Filter for highest-rated books
+st.write('---')
+
+# highest-rated books section
+st.subheader("My Highest Rated Reads")
 highest_rated_books = data.nlargest(10, 'star rating')  # Adjust number to show more or less
 highest_rated_isbns = highest_rated_books['isbn/uid'].dropna().unique()
-
-# Generate the HTML for the scrollable shelf of highest-rated books
-highest_rated_covers_html = '<div class="scrollable-shelf">'
-for isbn in highest_rated_isbns:
-    cover_url = get_book_cover(isbn)
-    if cover_url:
-        highest_rated_covers_html += f'<img src="{cover_url}" width="120" height="180"/>'
-highest_rated_covers_html += '</div>'
-
-# Render the HTML for the highest-rated shelf
-st.markdown(highest_rated_covers_html, unsafe_allow_html=True)
+render_bookshelf(highest_rated_isbns)
 
 st.write("---")
 
-# Total books read
+# total books read
 total_books = len(filtered_data)
 st.subheader(f"Total Books Read: {total_books}")
 
-### Visualization 4: Pie Chart for Star Ratings and Format
+
 if 'star rating' in filtered_data.columns and 'format' in filtered_data.columns:
-    # Create two columns
+
     col1, col2 = st.columns(2)
     
-    # Star Ratings Pie Chart
+    # my star ratings (pie chart) section
     with col1:
         star_rating_counts = filtered_data['star rating'].value_counts()
         fig_star_rating_pie = px.pie(
@@ -111,7 +144,7 @@ if 'star rating' in filtered_data.columns and 'format' in filtered_data.columns:
         avg_rating = filtered_data['star rating'].mean()
         st.write(f"**Average Star Rating**: {avg_rating:.2f}")
 
-    # Books by Format Pie Chart
+    # books by format (also pie chart) section
     with col2:
         format_counts = filtered_data['format'].value_counts()
         fig_format_pie = px.pie(
@@ -122,45 +155,20 @@ if 'star rating' in filtered_data.columns and 'format' in filtered_data.columns:
         )
         st.plotly_chart(fig_format_pie)
 
-# Get the most used format
+# get the most used format
 most_used_format_name = format_counts.idxmax()  # Get the name of the most used format
 most_used_format_count = format_counts.max()     # Get the count of the most used format
 st.write(f"**Most Used Format**: {most_used_format_name} ({most_used_format_count} books)")
 
 st.write('---')
-# Display book cover shelf for all books at the top
+
 st.subheader('Bookshelf')
 book_isbns = filtered_data['isbn/uid'].dropna().unique()
+render_bookshelf(book_isbns)
 
-# Create a scrollable horizontal shelf of book covers
-st.markdown("""
-    <style>
-    .scrollable-shelf {
-        display: flex;
-        overflow-x: scroll;
-        padding: 10px;
-        white-space: nowrap;
-    }
-    .scrollable-shelf img {
-        margin-right: 10px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-# Generate the HTML for the scrollable shelf
-book_covers_html = '<div class="scrollable-shelf">'
-for isbn in book_isbns:
-    cover_url = get_book_cover(isbn)
-    if cover_url:
-        book_covers_html += f'<img src="{cover_url}" width="120" height="180"/>'
-book_covers_html += '</div>'
-
-# Render the HTML for the shelf
-st.markdown(book_covers_html, unsafe_allow_html=True)
-
-### Additional Insights:
 st.write('---')
-### Visualization 3: Bar Chart for Number of Books Read by Year
+
+#bar chart for books read each year
 books_per_year = data.groupby('read_year').size()
 fig_books_year = px.bar(
     x=books_per_year.index,
@@ -169,17 +177,58 @@ fig_books_year = px.bar(
     title='Books Read by Year'
 )
 
-# Update x-axis to show only integer year values
 fig_books_year.update_xaxes(tickvals=books_per_year.index)
 st.plotly_chart(fig_books_year)
 
-# Show table of filtered data
+# Raw Data Section
 st.subheader('Raw Book Data')
 st.write(filtered_data[['title', 'authors', 'format', 'star rating']])
 
+
+# Reading Pace Section
+st.subheader('My Reading Pace Through the Years')
+
+# month and date to get reading pace 
+data['read_year'] = data['last date read'].dt.year
+data['read_month'] = data['last date read'].dt.month
+years = sorted(data['read_year'].dropna().unique(), reverse=True)
+
+# selectbox for the selected year
+selected_year = st.selectbox('Select Year for Reading Pace', years)
+filtered_data = data[data['read_year'] == selected_year]
+
+# books read per month count
+books_per_month = filtered_data.groupby('read_month').size().reset_index(name='books_read')
+
+# scatter plot
+fig_reading_pace = px.line(
+    books_per_month,
+    x='read_month',
+    y='books_read',
+    labels={'read_month': 'Month', 'books_read': 'Books Read'},
+    title=f'Reading Pace - Books Read Per Month in {selected_year}',
+    markers=True,  # This adds the dots at each data point
+    category_orders={"read_month": list(range(1, 13))}  # Ensures months are ordered correctly
+)
+
+
+fig_reading_pace.update_xaxes(
+    tickvals=list(range(1, 13)),
+    ticktext=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+)
+
+
+fig_reading_pace.update_traces(
+    line=dict(color='grey', width=2),  # Line color and width
+    marker=dict(size=10, color='skyblue', opacity=0.8, line=dict(width=2, color='DarkSlateGrey'))  # Marker properties
+)
+
+st.plotly_chart(fig_reading_pace)
+
 # Contact Footer
 st.write('---')
-st.subheader("Here's some links")
+st.subheader("About the author!")
+
 
 # Adding Font Awesome for icons
 st.markdown("""
