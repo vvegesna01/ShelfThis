@@ -251,7 +251,7 @@ st.markdown("""
 # Using Font Awesome icons
 st.markdown("""
  <a class="footer-link" href="https://github.com/vvegesna01" target="_blank"><i class="fab fa-github footer-icon"></i> GitHub</a>
- <a class="footer-link" href="https://localhost-keerthana.vercel.app/" target="_blank"><i class="fas fa-laptop footer-icon"></i> Portfolio Website</a>
+ <a class="footer-link" href="https://keerthana-vegesna.vercel.app/" target="_blank"><i class="fas fa-laptop footer-icon"></i> Portfolio Website</a>
  <a class="footer-link" href="https://www.linkedin.com/in/keerthana-vegesna/" target="_blank"><i class="fab fa-linkedin footer-icon"></i> LinkedIn</a>
 """, unsafe_allow_html=True)
 
